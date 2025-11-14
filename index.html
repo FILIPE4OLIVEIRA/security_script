@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Segurança</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: black;
+            color: #00ff66;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+            cursor: none;
+        }
+        
+        #terminal {
+            font-size: 18px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            background: #00ff66;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .warning {
+            color: #ff4444;
+            font-weight: bold;
+        }
+        
+        .critical {
+            color: #ff0000;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff0000;
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        .system {
+            color: #00aaff;
+        }
+        
+        .hacker {
+            color: #ff00ff;
+        }
+        
+        .matrix-char {
+            position: fixed;
+            top: -20px;
+            color: #00ff44;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0.7;
+            z-index: 1;
+            font-family: 'Courier New', monospace;
+        }
+        
+        @keyframes pulse {
+            from { opacity: 0.7; }
+            to { opacity: 1; }
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        
+        .flash {
+            animation: flash 0.3s;
+        }
+        
+        @keyframes flash {
+            0% { background-color: black; }
+            50% { background-color: #ff0000; }
+            100% { background-color: black; }
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.1);
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal"></div>
+    <div class="overlay" id="redOverlay"></div>
+
+    <script>
+        // Mensagens mais realistas e assustadoras
+        const MESSAGES = [
+            ">>> INICIANDO SISTEMA DE SEGURANÇA...",
+            ">>> VERIFICANDO INTEGRIDADE DO SISTEMA...",
+            "",
+            ">>> ALERTA CRÍTICO: ATIVIDADE SUSPEITA DETECTADA!",
+            ">>> ORIGEM: IP 192.168.4.72 - LOCALIZAÇÃO DESCONHECIDA",
+            "",
+            ">>> TENTATIVA DE ACESSO NÃO AUTORIZADO DETECTADA",
+            ">>> FIREWALL COMPROMETIDO - NÍVEL 3",
+            "",
+            ">>> SISTEMA DE ARQUIVOS SENDO ACESSADO...",
+            ">>> SCANNING PASTA: /USUÁRIOS/SEUS_DOCUMENTOS",
+            ">>> SCANNING PASTA: /USUÁRIOS/SUAS_IMAGENS",
+            ">>> SCANNING PASTA: /USUÁRIOS/SUAS_SENHAS",
+            "",
+            ">>> DADOS SENDO EXTRAÍDOS... 24% CONCLUÍDO",
+            ">>> SENHAS DE REDE SOCIAL ENCONTRADAS: 12",
+            ">>> DADOS BANCÁRIOS ENCONTRADOS: 7 ARQUIVOS",
+            ">>> FOTOS PESSOAIS ENCONTRADAS: 134 ARQUIVOS",
+            "",
+            ">>> BACKDOOR INSTALADO NO SISTEMA",
+            ">>> SEU MICROFONE ESTÁ SENDO ACESSADO...",
+            ">>> SUA WEBCAM ESTÁ SENDO ACESSADA...",
+            "",
+            ">>> VOCÊ FOI HACKEADO!",
+            ">>> SEUS DADOS ESTÃO SENDO COPIADOS AGORA",
+            "",
+            ">>> NÃO DESLIGUE O DISPOSITIVO",
+            ">>> ISSO PODE CORROMPER SEUS ARQUIVOS PERMANENTEMENTE",
+            "",
+            ">>> PAGUE 0.5 BTC PARA: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            ">>> PARA RECUPERAR SEUS DADOS",
+            "",
+            ">>> TEMPO RESTANTE: 05:00",
+            "",
+            "TOQUE NA TELA PARA TENTAR INTERROMPER..."
+        ];
+
+        const terminal = document.getElementById('terminal');
+        const redOverlay = document.getElementById('redOverlay');
+        let messageIndex = 0;
+        let charIndex = 0;
+        let typingSpeed = 40; // ms por caractere
+        let matrixInterval;
+
+        // Função para criar efeito Matrix
+        function createMatrixEffect() {
+            const chars = "01010101010101010101アイウエオカキクケコサシスセソ";
+            const container = document.body;
+            
+            function createRain() {
+                const element = document.createElement('div');
+                element.className = 'matrix-char';
+                element.style.cssText = `
+                    left: ${Math.random() * 100}vw;
+                    animation: fall ${Math.random() * 2 + 1}s linear forwards;
+                `;
+                element.textContent = chars[Math.floor(Math.random() * chars.length)];
+                container.appendChild(element);
+                
+                setTimeout(() => {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                }, 3000);
+            }
+            
+            // Adicionar estilo para animação de queda
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fall {
+                    to {
+                        transform: translateY(100vh);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            matrixInterval = setInterval(createRain, 50);
+        }
+
+        // Função para efeitos especiais
+        function triggerEffect() {
+            // Efeitos aleatórios baseados na mensagem atual
+            if (MESSAGES[messageIndex].includes("CRÍTICO") || 
+                MESSAGES[messageIndex].includes("HACKEADO") ||
+                MESSAGES[messageIndex].includes("BTC")) {
+                
+                // Tremor
+                document.body.classList.add('shake');
+                setTimeout(() => {
+                    document.body.classList.remove('shake');
+                }, 500);
+                
+                // Flash vermelho
+                document.body.classList.add('flash');
+                setTimeout(() => {
+                    document.body.classList.remove('flash');
+                }, 300);
+                
+                // Overlay vermelho
+                redOverlay.style.opacity = '0.3';
+                setTimeout(() => {
+                    redOverlay.style.opacity = '0';
+                }, 1000);
+                
+                // Alterar velocidade de digitação para mensagens críticas
+                typingSpeed = 20;
+            } else {
+                typingSpeed = 40;
+            }
+        }
+
+        function typeWriter() {
+            if (messageIndex < MESSAGES.length) {
+                const currentMessage = MESSAGES[messageIndex];
+                
+                if (charIndex === 0) {
+                    // Nova linha
+                    const lineDiv = document.createElement('div');
+                    terminal.appendChild(lineDiv);
+                    
+                    if (currentMessage.includes("CRÍTICO") || currentMessage.includes("HACKEADO")) {
+                        lineDiv.className = 'critical';
+                        triggerEffect();
+                    } else if (currentMessage.includes("ALERTA") || currentMessage.includes("BTC")) {
+                        lineDiv.className = 'warning';
+                        triggerEffect();
+                    } else if (currentMessage.includes(">>>")) {
+                        lineDiv.className = 'system';
+                    }
+                }
+                
+                const currentLine = terminal.lastChild;
+                
+                if (charIndex < currentMessage.length) {
+                    // Digitar caractere
+                    currentLine.textContent = currentMessage.substring(0, charIndex + 1);
+                    charIndex++;
+                    setTimeout(typeWriter, typingSpeed);
+                } else {
+                    // Próxima mensagem
+                    messageIndex++;
+                    charIndex = 0;
+                    
+                    // Adicionar cursor piscante entre linhas
+                    const cursorDiv = document.createElement('div');
+                    cursorDiv.className = 'cursor';
+                    cursorDiv.innerHTML = '&nbsp;';
+                    terminal.appendChild(cursorDiv);
+                    
+                    setTimeout(() => {
+                        terminal.removeChild(cursorDiv);
+                        setTimeout(typeWriter, 200);
+                    }, 500);
+                }
+            } else {
+                // Adicionar cursor final
+                const finalCursor = document.createElement('div');
+                finalCursor.className = 'cursor';
+                finalCursor.innerHTML = '&nbsp;';
+                terminal.appendChild(finalCursor);
+                
+                // Iniciar contagem regressiva
+                startCountdown();
+            }
+        }
+
+        // Contagem regressiva para aumentar a tensão
+        function startCountdown() {
+            let timeLeft = 300; // 5 minutos em segundos
+            
+            const countdownInterval = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                
+                // Atualizar mensagem de tempo
+                const timeElement = document.querySelector('.critical');
+                if (timeElement && timeElement.textContent.includes("TEMPO RESTANTE")) {
+                    timeElement.textContent = `>>> TEMPO RESTANTE: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+                
+                timeLeft--;
+                
+                if (timeLeft < 0) {
+                    clearInterval(countdownInterval);
+                    // Efeito final quando o tempo acaba
+                    document.body.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; background: black;">
+                            <div style="color: #ff0000; font-size: 32px; margin-bottom: 20px; text-shadow: 0 0 10px #ff0000; animation: pulse 0.5s infinite alternate;">SEUS DADOS FORAM EXCLUÍDOS</div>
+                            <div style="color: #888; font-size: 14px;">Todos os seus arquivos foram criptografados e excluídos permanentemente</div>
+                        </div>
+                    `;
+                }
+            }, 1000);
+        }
+
+        // Iniciar efeitos
+        setTimeout(() => {
+            createMatrixEffect();
+            setTimeout(typeWriter, 1000);
+        }, 500);
+
+        // Fechar ao tocar
+        document.body.addEventListener('click', function() {
+            clearInterval(matrixInterval);
+            
+            // Efeito de desligamento
+            document.body.style.transition = 'all 2s';
+            document.body.style.opacity = '0';
+            
+            setTimeout(() => {
+                document.body.innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; background: black;">
+                        <div style="color: #00ff66; font-size: 24px; margin-bottom: 20px;">SIMULAÇÃO CONCLUÍDA</div>
+                        <div style="color: #888; font-size: 14px; text-align: center; max-width: 80%;">
+                            Este foi apenas um exercício educacional.<br>
+                            Em um incidente real:<br>
+                            - Desconecte da internet imediatamente<br>
+                            - Altere todas as suas senhas<br>
+                            - Contate um profissional de segurança<br>
+                            - Faça backup regular dos seus dados
+                        </div>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    document.body.style.opacity = '1';
+                }, 100);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
