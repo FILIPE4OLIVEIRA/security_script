@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: black;
+            color: #00ff66;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+            cursor: none;
+        }
+        
+        #terminal {
+            font-size: 18px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-width: 100%;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            background: #00ff66;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .warning {
+            color: #ff4444;
+            font-weight: bold;
+        }
+        
+        .educational {
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal"></div>
+
+    <script>
+        const MESSAGES = [
+            ">>> ALERTA: Atividade suspeita detectada no sistema!",
+            ">>> SINAL: Possível intrusão identificada.",
+            "",
+            ">>> ESTE É APENAS UM TESTE / SIMULAÇÃO EDUCACIONAL.",
+            ">>> NENHUM ARQUIVO FOI MODIFICADO. NENHUM DADO FOI ROUBADO.",
+            "",
+            "Recomendações (em um incidente real):",
+            "- Alterar senhas imediatamente",
+            "- Desconectar o dispositivo da internet", 
+            "- Contatar o suporte de segurança",
+            "",
+            "Toque na tela para fechar..."
+        ];
+
+        const terminal = document.getElementById('terminal');
+        let messageIndex = 0;
+        let charIndex = 0;
+        let typingSpeed = 50; // ms por caractere
+
+        function typeWriter() {
+            if (messageIndex < MESSAGES.length) {
+                const currentMessage = MESSAGES[messageIndex];
+                
+                if (charIndex === 0) {
+                    // Nova linha
+                    const lineDiv = document.createElement('div');
+                    terminal.appendChild(lineDiv);
+                    
+                    if (currentMessage.includes("ESTE É APENAS")) {
+                        lineDiv.className = 'educational';
+                    } else if (currentMessage.includes("ALERTA") || currentMessage.includes("SINAL")) {
+                        lineDiv.className = 'warning';
+                    }
+                }
+                
+                const currentLine = terminal.lastChild;
+                
+                if (charIndex < currentMessage.length) {
+                    // Digitar caractere
+                    currentLine.textContent = currentMessage.substring(0, charIndex + 1);
+                    charIndex++;
+                    setTimeout(typeWriter, typingSpeed);
+                } else {
+                    // Próxima mensagem
+                    messageIndex++;
+                    charIndex = 0;
+                    
+                    // Adicionar cursor piscante entre linhas
+                    const cursorDiv = document.createElement('div');
+                    cursorDiv.className = 'cursor';
+                    cursorDiv.innerHTML = '&nbsp;';
+                    terminal.appendChild(cursorDiv);
+                    
+                    setTimeout(() => {
+                        terminal.removeChild(cursorDiv);
+                        setTimeout(typeWriter, 200);
+                    }, 500);
+                }
+            } else {
+                // Adicionar cursor final
+                const finalCursor = document.createElement('div');
+                finalCursor.className = 'cursor';
+                finalCursor.innerHTML = '&nbsp;';
+                terminal.appendChild(finalCursor);
+            }
+        }
+
+        // Iniciar efeito
+        setTimeout(typeWriter, 1000);
+
+        // Fechar ao tocar
+        document.body.addEventListener('click', function() {
+            document.body.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
+                    <div style="color: #00ff66; font-size: 24px; margin-bottom: 20px;">ALERTA ENCERRADO</div>
+                    <div style="color: #888; font-size: 14px;">Simulação educacional concluída</div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                document.body.style.backgroundColor = '#000';
+            }, 2000);
+        });
+
+        // Efeito Matrix no fundo (opcional)
+        function createMatrixEffect() {
+            const chars = "01";
+            const container = document.body;
+            
+            function createRain() {
+                const element = document.createElement('div');
+                element.style.cssText = `
+                    position: fixed;
+                    top: -20px;
+                    color: #00ff44;
+                    font-size: 14px;
+                    pointer-events: none;
+                    opacity: 0.3;
+                    z-index: -1;
+                `;
+                element.textContent = chars[Math.floor(Math.random() * chars.length)];
+                element.style.left = Math.random() * 100 + 'vw';
+                container.appendChild(element);
+                
+                setTimeout(() => {
+                    element.remove();
+                }, 2000);
+            }
+            
+            setInterval(createRain, 100);
+        }
+        
+        // Descomente a linha abaixo para ativar efeito Matrix no fundo
+        // createMatrixEffect();
+    </script>
+</body>
+</html>
